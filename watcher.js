@@ -2,6 +2,7 @@
 
 var fs = require('fs');
 var path = require('path');
+var log = require('pomelo-logger').getLogger('hotwork', 'Watcher');
 
 var monDirs = {};
 var Loader = module.exports = {};
@@ -13,7 +14,7 @@ Loader.watch = function (path, cb, scan) {
 	startWatch(path, cb);
 	if (scan) cb(Loader.load(path, false, scan, cb), scan);
 	var files = fs.readdirSync(path);
-	if (files.length === 0) return console.error('目录暂无文件：' + path);
+	if (files.length === 0) return log.error('目录暂无文件：' + path);
 	var fp = void 0, fn = void 0;
 	for (var i = 0, l = files.length; i < l; i++) {
 		fn = files[i];
@@ -22,13 +23,13 @@ Loader.watch = function (path, cb, scan) {
 	}
 }
 Loader.load = function (mpath, filename, scan, cb) {
-	if (!mpath) return console.error('路径不能为空！');
+	if (!mpath) return log.error('路径不能为空！');
 	try {
 		mpath = fs.realpathSync(mpath);
 	} catch (err) {
-		console.error('文件真实路径不存在：', mpath);
+		log.error('文件真实路径不存在：', mpath);
 	}
-	if (!isDir(mpath)) return console.error('文件路径不存在：', mpath);
+	if (!isDir(mpath)) log.error('文件路径不存在：', mpath);
 	return loadPath(mpath, filename, scan, cb);
 }
 
@@ -50,7 +51,7 @@ function loadFile(fp, scan) {
 function loadPath(path, filename, scan, cb) {
 	if (path.indexOf('.svn') !== -1 || path.indexOf('.git') !== -1) return;
 	var files = fs.readdirSync(path);
-	if (files.length === 0) return console.error('目录暂无文件：' + path);
+	if (files.length === 0) return log.error('目录暂无文件：' + path);
 	if (path.charAt(path.length - 1) !== '/') path += '/';
 	var fp = void 0, fn = void 0, m = void 0, res = {};
 	for (var i = 0, l = files.length; i < l; i++) {

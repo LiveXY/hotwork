@@ -1,5 +1,6 @@
 'use strict';
 
+var log = require('pomelo-logger').getLogger('hotwork', 'HotSource');
 var watcher = require('./watcher');
 var extend = require('./extend');
 
@@ -9,11 +10,11 @@ var file_bean_sort = {};
 function scanFolder(path) { watcher.watch(path, scanCallBack, true); }
 
 function callback(bean, scan, file) {
-	if (!bean.id) return console.error('热更新文件未配置id ->', file);
-	if (!bean.func) return console.error('热更新文件未配置func ->', file);
+	if (!bean.id) return log.error('热更新文件未配置id ->', file);
+	if (!bean.func) return log.error('热更新文件未配置func ->', file);
 	if (!!file_bean_sort[bean.id] && scan != true) {
 		if (file_bean_sort[bean.id] != file && res.beans.length == 1)
-			return console.error('ID ->', bean.id, '重复的文件 ->', file, '==', file_bean_sort[bean.id]);
+			return log.error('ID ->', bean.id, '重复的文件 ->', file, '==', file_bean_sort[bean.id]);
 	} else {
 		file_bean_sort[bean.id] = file;
 	}
@@ -21,7 +22,7 @@ function callback(bean, scan, file) {
 	if (!!hotmap[bean.id]) {
 		if (scan) return;
 		if (singleton != !!hotmap[bean.id].singleton)
-			return console.error('单例发生改变ID ->', bean.id, '=>', file);
+			return log.error('单例发生改变ID ->', bean.id, '=>', file);
 		var protos = null, orgprotos = {};
 		var org_func = hotmap[bean.id].func;
 		if (!!org_func) {
@@ -34,9 +35,9 @@ function callback(bean, scan, file) {
 		protos = bean.func.prototype;
 		try {
 			if (!!protos) for (var func_name in protos) orgprotos[func_name] = protos[func_name];
-			console.warn('文件ID ->', bean.id, '更新成功：', file, singleton, bean.runupdate);
+			log.warn('文件ID ->', bean.id, '更新成功：', file, singleton, bean.runupdate);
 		} catch (e) {
-			return console.error('文件ID ->', bean.id, '更新失败：', file, e);
+			return log.error('文件ID ->', bean.id, '更新失败：', file, e);
 		}
 		if (singleton && bean.hasOwnProperty('runupdate')) hotmap[bean.id].singleton[bean.runupdate]();
 	} else {
@@ -66,7 +67,7 @@ function scanCallBack(folderres, scan) {
 			//覆盖原有数据 noUpdate不更新/reverse只更新没有的数据
 			if (!!hotmap[file]) {
 				if (scan) return;
-				if (!!res.noUpdate) return console.warn('文件ID ->', file, '跳过更新！');
+				if (!!res.noUpdate) return log.warn('文件ID ->', file, '跳过更新！');
 				if (!!res.reverse) {
 					var org_res = hotmap[file].singleton;
 					for (var key in res) {
@@ -75,9 +76,9 @@ function scanCallBack(folderres, scan) {
 					}
 					return;
 				}
-				if (!hotmap[file].singleton) return console.error('文件无热更新数据：', file);
+				if (!hotmap[file].singleton) return log.error('文件无热更新数据：', file);
 				extend(true, hotmap[file].singleton, res);
-				console.warn('文件ID ->', file, '更新成功！');
+				log.warn('文件ID ->', file, '更新成功！');
 			} else {
 				hotmap[file] = { id: file, singleton: res };
 			}
@@ -90,12 +91,12 @@ exports.setHot = function (id, require, file) { file_bean_sort[id] = file; }
 exports.getHot = function (id, require, file) {
 	if (!hotmap.hasOwnProperty(id)) {
 		if (!file) file = id;
-		if (!require) return console.error('无热更新ID ->', id, ' => ', file);
+		if (!require) return log.error('无热更新ID ->', id, ' => ', file);
 		var res = {};
 		res[file] = require;
 		scanCallBack(res, true);
 	}
-	if (!hotmap.hasOwnProperty(id)) return console.error('依然无热更新ID ->', id, ' => ', file);
+	if (!hotmap.hasOwnProperty(id)) return log.error('依然无热更新ID ->', id, ' => ', file);
 	var hot = hotmap[id];
 	if (!!hot.singleton) return hot.singleton;
 	return hot.func;
